@@ -1,0 +1,54 @@
+{
+  "name": "boxthis",
+  "version": "0.1.0",
+  "description": "Reach the network floor: stream a budget-capped, JS-free critical shell that paints in the first network round-trip, then stream the rest — the build-by-construction companion to lightsout's network-floor analysis. Zero dependencies.",
+  "type": "module",
+  "bin": {
+    "boxthis": "./bin/boxthis.mjs"
+  },
+  "exports": {
+    ".": "./src/ship.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/ship.test.mjs",
+    "demo": "node demo/server.mjs"
+  },
+  "keywords": [
+    "streaming",
+    "ssr",
+    "14kb",
+    "tcp",
+    "slow-start",
+    "critical-css",
+    "first-paint",
+    "ttfb",
+    "progressive-rendering",
+    "zero-dependencies"
+  ],
+  "license": "MIT",
+  "author": "Harshal Rudra",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theharshal30/boxthis.git"
+  },
+  "homepage": "https://github.com/theharshal30/boxthis#readme",
+  "bugs": {
+    "url": "https://github.com/theharshal30/boxthis/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "lightsout": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "lightsout": {
+      "optional": true
+    }
+  }
+}
