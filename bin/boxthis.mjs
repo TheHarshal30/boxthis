@@ -18,37 +18,51 @@ function parseArgs(argv) {
   return o;
 }
 
-async function findLightsoutBin() {
+// Locate a lightsoutt bin FILE next to us (dev sibling, or an installed dep).
+async function findLocalBin() {
   const candidates = [
     new URL("../../lightsout/bin/lightsout.mjs", import.meta.url),
     new URL("../node_modules/lightsoutt/bin/lightsout.mjs", import.meta.url),
     new URL("../../node_modules/lightsoutt/bin/lightsout.mjs", import.meta.url),
   ].map(fileURLToPath);
-  for (const c of candidates) {
-    try {
-      await access(c);
-      return c;
-    } catch {}
-  }
+  for (const c of candidates) { try { await access(c); return c; } catch {} }
   return null;
 }
 
-function runLightsout(bin, url, rtt) {
+// Spawn `cmd args` and resolve lightsoutt's JSON report from stdout. Rejects with
+// code "ENOENT" when the command isn't found, so the caller can try another way.
+function spawnJson(cmd, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [bin, url, "--fcp", "--json", "--rtt", String(rtt)], { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
     let out = "", err = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
-    child.on("error", reject);
-
+    child.on("error", reject); // ENOENT when the command doesn't exist
     child.on("close", () => {
-      try {
-        resolve(JSON.parse(out));
-      } catch {
-        reject(new Error(`lightsout produced no parseable JSON.${err ? " " + err.trim() : ""}`));
-      }
+      const s = out.indexOf("{"), e = out.lastIndexOf("}"); // tolerate a stray wrapper line
+      if (s !== -1 && e > s) { try { return resolve(JSON.parse(out.slice(s, e + 1))); } catch {} }
+      reject(new Error(`lightsoutt produced no parseable JSON.${err ? " " + err.trim().split("\n").pop() : ""}`));
     });
   });
+}
+
+// Measure paint readiness via lightsoutt. Tries, in order: a resolvable bin file,
+// the `lightsoutt` command on PATH (a global install), then `npx -y lightsoutt`
+// (fetches it). So `boxthis audit` works whether boxthis is global, local, or npx.
+async function measurePaint(url, rtt) {
+  const args = [url, "--fcp", "--json", "--rtt", String(rtt)];
+  const localBin = await findLocalBin();
+  const attempts = [];
+  if (localBin) attempts.push([process.execPath, [localBin, ...args]]);
+  attempts.push(["lightsoutt", args]);
+  attempts.push(["npx", ["-y", "lightsoutt", ...args]]);
+
+  let lastErr;
+  for (const [cmd, a] of attempts) {
+    try { return await spawnJson(cmd, a); }
+    catch (e) { lastErr = e; if (e && e.code === "ENOENT") continue; throw e; }
+  }
+  throw lastErr || new Error("could not run lightsoutt");
 }
 
 const CLASS_ICON = { "Floor-limited": "✅", Efficient: "✅", "Moderately delayed": "⚠️ ", "JS-taxed": "⚠️ ", "JS-bound": "❌" };
@@ -59,13 +73,15 @@ async function audit(opts) {
     console.error("usage: boxthis audit <url> [--target 0.8] [--rtt 150]");
     process.exit(2);
   }
-  const bin = await findLightsoutBin();
-  if (!bin) {
-    console.error("boxthis audit: needs the `lightsout` package to measure PRR (it's the companion tool). Install it alongside boxthis.");
+  let report;
+  try {
+    report = await measurePaint(opts.url, opts.rtt);
+  } catch (e) {
+    console.error("boxthis audit: couldn't measure with lightsoutt (the companion tool).");
+    console.error("  install it:  npm i -g lightsoutt");
+    console.error("  detail: " + (e && e.message ? e.message : e));
     process.exit(2);
   }
-
-  const report = await runLightsout(bin, opts.url, opts.rtt);
   const floor = report.criticalPath?.networkFloorMs;
   const fcp = report.paint?.fcpMs;
   const prr = report.paint?.paintReadiness;
