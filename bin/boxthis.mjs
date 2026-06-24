@@ -21,8 +21,8 @@ function parseArgs(argv) {
 async function findLightsoutBin() {
   const candidates = [
     new URL("../../lightsout/bin/lightsout.mjs", import.meta.url),
-    new URL("../node_modules/lightsout/bin/lightsout.mjs", import.meta.url),
-    new URL("../../node_modules/lightsout/bin/lightsout.mjs", import.meta.url),
+    new URL("../node_modules/@fourdoorsmorewhoes/lightsout/bin/lightsout.mjs", import.meta.url),
+    new URL("../../node_modules/@fourdoorsmorewhoes/lightsout/bin/lightsout.mjs", import.meta.url),
   ].map(fileURLToPath);
   for (const c of candidates) {
     try {
