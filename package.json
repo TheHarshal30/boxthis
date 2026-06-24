@@ -1,6 +1,6 @@
 {
   "name": "boxthis",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reach the network floor: stream a budget-capped, JS-free critical shell that paints in the first network round-trip, then stream the rest — the build-by-construction companion to lightsout's network-floor analysis. Zero dependencies.",
   "type": "module",
   "bin": {
@@ -44,10 +44,10 @@
     "node": ">=18"
   },
   "peerDependencies": {
-    "@fourdoorsmorewhoes/lightsout": ">=0.1.0"
+    "lightsoutt": ">=0.1.0"
   },
   "peerDependenciesMeta": {
-    "@fourdoorsmorewhoes/lightsout": {
+    "lightsoutt": {
       "optional": true
     }
   }
