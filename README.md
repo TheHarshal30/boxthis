@@ -154,6 +154,37 @@ or test to assert the critical path stays under budget and at the network floor.
 The five-bucket classifier (mirrors `lightsout`). Feed it a real measured PRR
 (`networkFloorMs ÷ FCP`) to label any page, not just a boxthis shell.
 
+## The `x-boxthis` Response Header
+
+Every response sent by `ship()` includes an `x-boxthis` header so that proxies, CDNs, and CI pipelines can read the budget verdict without parsing the response body.
+
+### Header Values
+
+| Header | Meaning |
+|---|---|
+| `x-boxthis: fit` | The critical shell fits within the budget (default 14 KB gzipped). |
+| `x-boxthis: over;by=<bytes>` | The critical shell exceeds the budget by `<bytes>` bytes. |
+
+### Examples
+
+**Fits the budget:**
+```
+HTTP/1.1 200 OK
+x-boxthis: fit
+```
+
+**Over budget by 2048 bytes:**
+```
+HTTP/1.1 200 OK
+x-boxthis: over;by=2048
+```
+
+### Use Cases
+
+- **CI gating:** Check the header in integration tests to assert that a page stays under budget.
+- **Proxy/CDN rules:** Route or cache responses based on whether the shell fits.
+- **Monitoring:** Log the header value to track budget compliance over time.
+
 ## Honest limitations (know these before you defend it online)
 
 - **Compression middleware can defeat streaming.** A gzip layer that buffers the
