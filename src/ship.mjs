@@ -120,7 +120,12 @@ export async function ship(res, {
   res.flush?.();
 
   for (const part of deferred) {
-    const chunk = await resolveDeferred(part);
+    let chunk;
+    try {
+      chunk = await resolveDeferred(part);
+    } catch {
+      continue;
+    }
     if (chunk) {
       res.write(chunk);
       res.flush?.();
