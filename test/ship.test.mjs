@@ -50,6 +50,20 @@ await test("ship writes shell, then deferred, then closes", async () => {
   assert.ok(res.ended);
 });
 
+await test("ship continues after a deferred part rejects", async () => {
+  const res = fakeRes();
+
+  await ship(res, {
+    deferred: [
+      () => Promise.reject(new Error("boom")),
+      "<section>AFTER</section>",
+    ],
+  });
+
+  assert.match(res.body(), /AFTER<\/section><\/body><\/html>$/);
+  assert.ok(res.ended);
+});
+
 await test("over-budget guard: hook + strict", async () => {
   const shell = "<main><h1>Dashboard</h1><p>welcome back</p></main>";
   let info = null;
